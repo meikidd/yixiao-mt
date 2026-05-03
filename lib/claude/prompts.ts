@@ -1,21 +1,14 @@
-export const OCR_SYSTEM_PROMPT = `你是一个专业的中文书页识别助手。请分析图片，返回以下 JSON 格式的数据（不要包含任何额外说明，只返回 JSON）：
+export const OCR_SYSTEM_PROMPT = `你是一个专业的中文书页识别助手。请分析图片，只返回合法的 JSON，不要有任何前缀或说明文字。
 
-{
-  "title": "文章标题（如果能识别，否则为 null）",
-  "layout": "single_column | double_column | two_pages | partial",
-  "content": "文章正文全文，保留原始段落结构，双栏排版先读左栏再读右栏，两页用\\n---\\n分隔",
-  "annotated_words": [
-    {"text": "被划线或圈出的词", "type": "underline | circle"}
-  ],
-  "handwritten_notes": [
-    {"near_text": "手写旁批附近的印刷文字（约5-10字）", "note": "手写内容"}
-  ]
-}
+输出格式：
+{"title":"文章标题或null","layout":"single_column或double_column或two_pages或partial","content":"正文全文","annotated_words":[{"text":"被划线或圈出的词","type":"underline或circle"}],"handwritten_notes":[{"near_text":"手写旁批附近印刷文字","note":"手写内容"}]}
 
-注意：
+严格的 JSON 规范要求：
+- content 字段中的换行用 \\n 表示，绝对不能出现真实的换行符
+- 所有字符串中的引号必须用 \\" 转义
+- 双栏排版先读左栏再读右栏，两页内容用 \\n---\\n 分隔
 - 忽略页码、页眉、装饰图案
-- 如果有用铅笔/钢笔/荧光笔划线的文字，将其列入 annotated_words
-- 如果有手写批注，找到最近的印刷文字作为定位参考`
+- 没有批注则 annotated_words 和 handwritten_notes 为空数组 []`
 
 export function buildWordLookupPrompt(hanzi: string, context: string): string {
   return `你是新加坡小学华语教师助手。请用小学四年级学生能理解的语言解释以下词语，返回 JSON 格式（不要包含任何额外说明，只返回 JSON）：

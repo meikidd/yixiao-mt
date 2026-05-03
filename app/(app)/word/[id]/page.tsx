@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import type { ExampleSentence } from '@/lib/supabase/types'
+import { Pinyin } from '@/components/ui/pinyin'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -47,8 +48,13 @@ export default async function WordDetailPage({ params }: Props) {
     .select('*, articles(id, title, date_read, content)')
     .eq('word_id', id)
 
-  const examples = word.example_sentences
-    ? (word.example_sentences as ExampleSentence[])
+  const rawEx = word.example_sentences
+  const examples: ExampleSentence[] = !rawEx
+    ? []
+    : Array.isArray(rawEx)
+    ? (rawEx as ExampleSentence[])
+    : typeof rawEx === 'string'
+    ? (() => { try { return JSON.parse(rawEx) } catch { return [] } })()
     : []
 
   const grouped = (relationships ?? []).reduce<Record<string, typeof relationships>>((acc, rel) => {
@@ -77,7 +83,7 @@ export default async function WordDetailPage({ params }: Props) {
             </Badge>
           )}
         </div>
-        {word.pinyin && <p className="text-lg text-muted-foreground mt-1">{word.pinyin}</p>}
+        <Pinyin value={word.pinyin} className="text-lg text-muted-foreground mt-1 block" />
         {word.part_of_speech && (
           <Badge variant="secondary" className="mt-2">{word.part_of_speech}</Badge>
         )}
@@ -127,7 +133,7 @@ export default async function WordDetailPage({ params }: Props) {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 text-sm transition-colors"
                       >
                         {wb.hanzi}
-                        {wb.pinyin && <span className="text-xs text-muted-foreground">{wb.pinyin}</span>}
+                        <Pinyin value={wb.pinyin} className="text-xs text-muted-foreground" />
                       </Link>
                     )
                   })}

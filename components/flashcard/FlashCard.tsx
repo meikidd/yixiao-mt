@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle2, RefreshCw, Eye } from 'lucide-react'
+import { Pinyin } from '@/components/ui/pinyin'
 
 interface Props {
   hanzi: string
@@ -35,7 +36,7 @@ export function FlashCard({ hanzi, pinyin, definition, onKnown, onAgain }: Props
 
           {flipped && (
             <div className="space-y-2 animate-in fade-in duration-200">
-              <p className="text-base text-primary font-medium">{pinyin}</p>
+              <Pinyin value={pinyin} className="text-base text-primary font-medium" />
               <p className="text-sm text-muted-foreground leading-relaxed">{definition}</p>
             </div>
           )}

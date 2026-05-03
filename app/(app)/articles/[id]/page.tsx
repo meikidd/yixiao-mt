@@ -1,11 +1,13 @@
 export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation'
 import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
-import { ArticleText } from '@/components/article-viewer/ArticleText'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, StickyNote } from 'lucide-react'
 import Link from 'next/link'
+import { ImageRowWithAppend } from './ImageRowWithAppend'
+import { EditableContent } from './EditableContent'
+import { ArticleWordsBadge } from './ArticleWordsBadge'
+import { DeleteArticleButton } from './DeleteArticleButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -20,43 +22,60 @@ export default async function ArticleDetailPage({ params }: Props) {
     .select('*')
     .eq('id', id)
     .eq('user_id', DEFAULT_USER_ID)
-    .single() as { data: { id: string; title: string | null; content: string; date_read: string; raw_image_urls: string[] | null; source: string; notes: string | null } | null }
+    .single() as {
+      data: {
+        id: string
+        title: string | null
+        content: string
+        date_read: string
+        raw_image_urls: string[] | null
+      } | null
+    }
 
   if (!article) notFound()
 
-  type AW = { is_annotated: boolean; annotation_note: string | null; annotation_type: string | null; words: { hanzi: string } | null }
+  type AW = {
+    annotation_note: string | null
+    words: { hanzi: string; pinyin: string | null } | null
+  }
   const { data: articleWords } = await supabase
     .from('article_words')
-    .select('is_annotated, annotation_note, annotation_type, words(hanzi)')
+    .select('annotation_note, words(hanzi, pinyin)')
     .eq('article_id', id) as { data: AW[] | null }
 
-  const annotatedWords = (articleWords ?? [])
-    .filter((aw) => aw.is_annotated)
+  const vocabWords = (articleWords ?? [])
     .map((aw) => aw.words?.hanzi)
     .filter(Boolean) as string[]
+
+  // Pass raw pinyin — <Pinyin> component handles formatting
+  const vocabWordsFull = (articleWords ?? [])
+    .filter((aw) => aw.words)
+    .map((aw) => ({ hanzi: aw.words!.hanzi, pinyin: aw.words!.pinyin }))
 
   const handwrittenNotes = (articleWords ?? [])
     .filter((aw) => aw.annotation_note)
     .map((aw) => ({ word: aw.words?.hanzi, note: aw.annotation_note }))
 
+  const imageUrls = article.raw_image_urls ?? []
+
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6">
-      <Link href="/articles" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
-        <ArrowLeft className="h-4 w-4" />
-        文章列表
-      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <Link href="/articles" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />
+          文章列表
+        </Link>
+        <DeleteArticleButton articleId={id} />
+      </div>
 
       <div className="mb-6">
         {article.title && <h1 className="text-2xl font-bold mb-1">{article.title}</h1>}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{new Date(article.date_read).toLocaleDateString('zh-CN')}</span>
-          {annotatedWords.length > 0 && (
-            <Badge variant="secondary">{annotatedWords.length} 个标注词</Badge>
-          )}
+          <ArticleWordsBadge words={vocabWordsFull} articleId={id} />
         </div>
       </div>
 
-      {/* Handwritten notes */}
       {handwrittenNotes.length > 0 && (
         <Card className="mb-5 bg-yellow-50 border-yellow-200">
           <CardContent className="p-3">
@@ -75,29 +94,14 @@ export default async function ArticleDetailPage({ params }: Props) {
         </Card>
       )}
 
-      {/* Article text - click any char to look up */}
-      <ArticleText
-        content={article.content}
-        annotatedWords={annotatedWords}
-        articleId={id}
-      />
+      <EditableContent articleId={id} content={article.content} vocabWords={vocabWords} />
 
-      {/* Image(s) */}
-      {article.raw_image_urls && article.raw_image_urls.length > 0 && (
-        <div className="mt-8 border-t pt-6">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">原始图片</p>
-          <div className="space-y-3">
-            {article.raw_image_urls.map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                alt={`原图 ${i + 1}`}
-                className="w-full rounded-lg border"
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="mt-8 border-t pt-6">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          {imageUrls.length > 0 ? '原始图片' : '追加照片'}
+        </p>
+        <ImageRowWithAppend articleId={id} imageUrls={imageUrls} />
+      </div>
     </div>
   )
 }

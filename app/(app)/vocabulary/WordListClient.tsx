@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { useWordCardStore } from '@/store/wordCard'
-import { Search } from 'lucide-react'
+import { Pinyin } from '@/components/ui/pinyin'
+import { Search, Trash2 } from 'lucide-react'
 
 interface WordEntry {
   id: string
@@ -27,16 +27,47 @@ interface Props {
 
 type FilterStatus = 'all' | 'new' | 'learning' | 'reviewing' | 'mastered'
 
-export function WordListClient({ words, statusLabels, statusColors }: Props) {
+const STATUS_CYCLE: Record<string, string> = {
+  new: 'learning',
+  learning: 'reviewing',
+  reviewing: 'mastered',
+  mastered: 'new',
+}
+
+export function WordListClient({ words: initialWords, statusLabels, statusColors }: Props) {
   const { openWord } = useWordCardStore()
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [search, setSearch] = useState('')
+  const [words, setWords] = useState(initialWords)
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
 
   const filtered = words.filter((w) => {
     if (filter !== 'all' && w.status !== filter) return false
     if (search && !w.word?.hanzi.includes(search) && !w.word?.pinyin.includes(search)) return false
     return true
   })
+
+  async function handleStatusCycle(e: React.MouseEvent, uw: WordEntry) {
+    e.stopPropagation()
+    const next = STATUS_CYCLE[uw.status] ?? 'new'
+    setWords((prev) => prev.map((w) => w.id === uw.id ? { ...w, status: next } : w))
+    await fetch(`/api/user-words/${uw.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next }),
+    })
+  }
+
+  async function handleDelete(e: React.MouseEvent, uw: WordEntry) {
+    e.stopPropagation()
+    if (!confirm(`从词汇表删除「${uw.word?.hanzi}」？`)) return
+    setPendingIds((prev) => new Set([...prev, uw.id]))
+    const res = await fetch(`/api/user-words/${uw.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setWords((prev) => prev.filter((w) => w.id !== uw.id))
+    }
+    setPendingIds((prev) => { const n = new Set(prev); n.delete(uw.id); return n })
+  }
 
   return (
     <div className="space-y-4">
@@ -64,12 +95,11 @@ export function WordListClient({ words, statusLabels, statusColors }: Props) {
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
-            {s === 'all' ? '全部' : statusLabels[s]}
+            {s === 'all' ? `全部 (${words.length})` : `${statusLabels[s]} (${words.filter((w) => w.status === s).length})`}
           </button>
         ))}
       </div>
 
-      {/* Word list */}
       {filtered.length === 0 && (
         <p className="text-center text-muted-foreground py-10 text-sm">没有找到匹配的词</p>
       )}
@@ -77,25 +107,44 @@ export function WordListClient({ words, statusLabels, statusColors }: Props) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {filtered.map((uw) => {
           if (!uw.word) return null
+          const isPending = pendingIds.has(uw.id)
           return (
             <Card
               key={uw.id}
-              className="cursor-pointer hover:border-primary/50 transition-colors active:scale-95"
+              className={`cursor-pointer hover:border-primary/50 transition-all active:scale-95 ${isPending ? 'opacity-40 pointer-events-none' : ''}`}
               onClick={() => openWord(uw.word!.hanzi)}
             >
               <CardContent className="p-3">
-                <div className="flex items-start justify-between gap-1">
+                {/* Top row: hanzi + delete */}
+                <div className="flex items-start justify-between gap-1 mb-1">
                   <span className="text-lg font-bold leading-tight">{uw.word.hanzi}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${statusColors[uw.status] ?? ''}`}>
-                    {statusLabels[uw.status] ?? uw.status}
-                  </span>
+                  <button
+                    onClick={(e) => handleDelete(e, uw)}
+                    className="p-0.5 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                    title="从词汇表删除"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
+
+                {/* Pinyin */}
                 {uw.word.pinyin && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{uw.word.pinyin}</p>
+                  <Pinyin value={uw.word.pinyin} className="text-xs text-muted-foreground" />
                 )}
+
+                {/* Definition */}
                 {uw.word.definition && (
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{uw.word.definition}</p>
                 )}
+
+                {/* Status badge — click to cycle */}
+                <button
+                  onClick={(e) => handleStatusCycle(e, uw)}
+                  className={`mt-2 text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-opacity hover:opacity-70 ${statusColors[uw.status] ?? ''}`}
+                  title="点击切换学习状态"
+                >
+                  {statusLabels[uw.status] ?? uw.status}
+                </button>
               </CardContent>
             </Card>
           )
