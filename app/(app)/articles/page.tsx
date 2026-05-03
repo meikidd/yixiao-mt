@@ -2,21 +2,8 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { BookOpen, Camera, FileText } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { ArticleSearch } from './ArticleSearch'
-
-const SOURCE_ICON = {
-  photo: Camera,
-  manual: FileText,
-  builtin: BookOpen,
-}
-
-const SOURCE_LABEL = {
-  photo: '拍照',
-  manual: '手动',
-  builtin: '教材',
-}
 
 interface Props {
   searchParams: Promise<{ q?: string }>
@@ -77,29 +64,20 @@ export default async function ArticlesPage({ searchParams }: Props) {
       )}
 
       {isSearching ? (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           {articles?.map((article) => {
-            const Icon = SOURCE_ICON[article.source as keyof typeof SOURCE_ICON] ?? FileText
             const idx = article.content.toLowerCase().indexOf((q ?? '').toLowerCase())
             const snippet = idx >= 0
               ? article.content.slice(Math.max(0, idx - 10), idx + 30)
               : article.content.slice(0, 40)
             return (
-              <Link key={article.id} href={`/articles/${article.id}`}>
+              <Link key={article.id} href={`/articles/${article.id}`} className="block">
                 <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-                  <CardContent className="p-3 flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-muted shrink-0">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium line-clamp-1">
-                        {article.title ?? article.content.slice(0, 30) + '…'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">…{snippet}…</p>
-                    </div>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      {SOURCE_LABEL[article.source as keyof typeof SOURCE_LABEL] ?? article.source}
-                    </Badge>
+                  <CardContent className="p-4">
+                    <p className="font-medium line-clamp-1">
+                      {article.title ?? article.content.slice(0, 30) + '…'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">…{snippet}…</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -110,35 +88,24 @@ export default async function ArticlesPage({ searchParams }: Props) {
         <div className="space-y-6">
           {Object.entries(grouped).map(([date, dateArticles]) => (
             <div key={date}>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 {new Date(date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
               </p>
-              <div className="space-y-2">
-                {dateArticles?.map((article) => {
-                  const Icon = SOURCE_ICON[article.source as keyof typeof SOURCE_ICON] ?? FileText
-                  return (
-                    <Link key={article.id} href={`/articles/${article.id}`}>
-                      <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-                        <CardContent className="p-3 flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-muted shrink-0">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium line-clamp-1">
-                              {article.title ?? article.content.slice(0, 30) + '…'}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                              {article.content.slice(0, 60)}…
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="shrink-0 text-xs">
-                            {SOURCE_LABEL[article.source as keyof typeof SOURCE_LABEL] ?? article.source}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  )
-                })}
+              <div className="flex flex-col gap-2">
+                {dateArticles?.map((article) => (
+                  <Link key={article.id} href={`/articles/${article.id}`} className="block">
+                    <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                      <CardContent className="p-4">
+                        <p className="font-medium line-clamp-1">
+                          {article.title ?? article.content.slice(0, 30) + '…'}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {article.content.slice(0, 80)}…
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
               </div>
             </div>
           ))}
