@@ -37,14 +37,16 @@ export function UploadClient() {
     setStep('preprocessing')
 
     try {
-      // Step 1: OpenCV preprocessing
-      const { blob, wasProcessed } = await preprocessDocumentImage(file)
-      console.log('Image preprocessing:', wasProcessed ? 'applied' : 'skipped (fallback)')
+      // Step 1: OpenCV perspective correction
+      const { blob: preprocessed } = await preprocessDocumentImage(file)
 
-      // Step 2: Upload + OCR
+      // Step 2: Compress to stay under Claude API's 5 MB base64 limit (~3.7 MB raw)
+      const compressed = await compressImage(preprocessed, { maxDimension: 1600, maxBytes: 3_700_000 })
+
+      // Step 3: Upload + OCR
       setStep('uploading')
       const formData = new FormData()
-      formData.append('image', blob, file.name)
+      formData.append('image', compressed, 'image.jpg')
 
       setStep('analyzing')
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
@@ -154,4 +156,45 @@ export function UploadClient() {
       )}
     </div>
   )
+}
+
+async function compressImage(
+  blob: Blob,
+  { maxDimension = 1600, maxBytes = 3_700_000 }: { maxDimension?: number; maxBytes?: number }
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(blob)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      // Scale down if either dimension exceeds maxDimension
+      let { width, height } = img
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+
+      // Try quality 0.85 first, then reduce until under maxBytes
+      const tryQuality = (quality: number) => {
+        canvas.toBlob((result) => {
+          if (!result) { reject(new Error('canvas empty')); return }
+          if (result.size <= maxBytes || quality <= 0.4) {
+            resolve(result)
+          } else {
+            tryQuality(Math.round((quality - 0.1) * 10) / 10)
+          }
+        }, 'image/jpeg', quality)
+      }
+      tryQuality(0.85)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')) }
+    img.src = url
+  })
 }
