@@ -10,3 +10,5 @@ export function getAnthropicClient() {
 }
 
 export const MODEL = 'claude-sonnet-4-6'
+// Cheaper model for simple NLP tasks (synonym/antonym lookup, etc.)
+export const CHEAP_MODEL = 'claude-haiku-4-5'
