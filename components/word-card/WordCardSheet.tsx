@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { useWordCardStore } from '@/store/wordCard'
 import type { WordRow, WordRelationshipRow } from '@/lib/supabase/types'
 import { RelatedWords } from './RelatedWords'
-import { Loader2, BookmarkPlus, BookmarkCheck } from 'lucide-react'
+import { Loader2, BookmarkPlus, BookmarkCheck, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 import { Pinyin } from '@/components/ui/pinyin'
 
 interface LookupData {
@@ -80,7 +81,19 @@ export function WordCardSheet() {
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <SheetTitle className="text-3xl font-bold tracking-wider">{hanzi}</SheetTitle>
+              <div className="flex items-center gap-2">
+                <SheetTitle className="text-3xl font-bold tracking-wider">{hanzi}</SheetTitle>
+                {data?.word?.id && (
+                  <Link
+                    href={`/word/${data.word.id}`}
+                    onClick={close}
+                    className="text-muted-foreground hover:text-foreground transition-colors mt-1"
+                    title="查看详情"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
               {data?.word?.pinyin && (
                 <p className="text-base text-muted-foreground mt-1"><Pinyin value={data.word.pinyin} /></p>
               )}
