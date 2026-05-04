@@ -38,18 +38,29 @@ export default async function ArticleDetailPage({ params }: Props) {
     annotation_note: string | null
     words: { hanzi: string; pinyin: string | null } | null
   }
-  const { data: articleWords } = await supabase
-    .from('article_words')
-    .select('annotation_note, words(hanzi, pinyin)')
-    .eq('article_id', id) as { data: AW[] | null }
+  const [{ data: articleWords }, { data: userWords }] = await Promise.all([
+    supabase
+      .from('article_words')
+      .select('annotation_note, words(hanzi, pinyin)')
+      .eq('article_id', id) as unknown as Promise<{ data: AW[] | null }>,
+    supabase
+      .from('user_words')
+      .select('words(hanzi)')
+      .eq('user_id', DEFAULT_USER_ID) as unknown as Promise<{ data: { words: { hanzi: string } | null }[] | null }>,
+  ])
 
+  const userVocabSet = new Set(
+    (userWords ?? []).map((uw) => uw.words?.hanzi).filter(Boolean) as string[]
+  )
+
+  // Only underline words still in the user's vocabulary
   const vocabWords = (articleWords ?? [])
     .map((aw) => aw.words?.hanzi)
-    .filter(Boolean) as string[]
+    .filter((h): h is string => !!h && userVocabSet.has(h))
 
   // Pass raw pinyin — <Pinyin> component handles formatting
   const vocabWordsFull = (articleWords ?? [])
-    .filter((aw) => aw.words)
+    .filter((aw) => aw.words && userVocabSet.has(aw.words.hanzi))
     .map((aw) => ({ hanzi: aw.words!.hanzi, pinyin: aw.words!.pinyin }))
 
   const handwrittenNotes = (articleWords ?? [])

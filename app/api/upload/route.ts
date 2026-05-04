@@ -187,12 +187,12 @@ async function lookupAndEnrichAsync(
 
       await supabase.from('word_relationships').upsert({
         word_a_id: wordA.id, word_b_id: wordB.id,
-        relation_type: rel.relation_type, explanation: rel.explanation, auto_generated: true,
+        relation_type: rel.relation_type, auto_generated: true,
       }, { onConflict: 'word_a_id,word_b_id,relation_type' })
 
       await supabase.from('word_relationships').upsert({
         word_a_id: wordB.id, word_b_id: wordA.id,
-        relation_type: rel.relation_type, explanation: rel.explanation, auto_generated: true,
+        relation_type: rel.relation_type, auto_generated: true,
       }, { onConflict: 'word_a_id,word_b_id,relation_type' })
     }
   }
