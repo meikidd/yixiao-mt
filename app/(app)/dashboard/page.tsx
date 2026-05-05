@@ -1,36 +1,27 @@
-export const dynamic = 'force-dynamic'
+'use client'
+
+import useSWR from 'swr'
 import Link from 'next/link'
-import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
+import { fetcher } from '@/lib/fetcher'
 import { Card, CardContent } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { Camera, BookOpen, Brain } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PageSpinner } from '@/components/ui/page-spinner'
 
-export default async function DashboardPage() {
-  const supabase = getSupabaseServerClient()
+interface DashboardStats {
+  recentArticles: { id: string; title: string | null; date_read: string; content: string }[]
+  dueCount: number
+  totalWords: number
+  masteredWords: number
+}
 
-  const [{ data: recentArticles }, { data: dueWords }, { data: allUserWords }] = await Promise.all([
-    supabase
-      .from('articles')
-      .select('id, title, date_read, content')
-      .eq('user_id', DEFAULT_USER_ID)
-      .order('date_read', { ascending: false })
-      .limit(3),
-    supabase
-      .from('user_words')
-      .select('id')
-      .eq('user_id', DEFAULT_USER_ID)
-      .or(`next_review_at.is.null,next_review_at.lte.${new Date().toISOString()}`)
-      .neq('status', 'mastered'),
-    supabase
-      .from('user_words')
-      .select('id, status')
-      .eq('user_id', DEFAULT_USER_ID),
-  ])
+export default function DashboardPage() {
+  const { data, isLoading } = useSWR<DashboardStats>('/api/dashboard/stats', fetcher)
 
-  const dueCount = dueWords?.length ?? 0
-  const totalWords = allUserWords?.length ?? 0
-  const masteredWords = (allUserWords as { status: string }[] ?? []).filter((w) => w.status === 'mastered').length
+  if (isLoading) return <PageSpinner />
+
+  const { recentArticles = [], dueCount = 0, totalWords = 0, masteredWords = 0 } = data ?? {}
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
@@ -97,11 +88,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent articles */}
-      {recentArticles && recentArticles.length > 0 && (
+      {recentArticles.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">最近读过的文章</h2>
-          <div className="space-y-2">
-            {(recentArticles as { id: string; title: string | null; date_read: string; content: string }[]).map((article) => (
+          <div className="flex flex-col gap-2">
+            {recentArticles.map((article) => (
               <Link key={article.id} href={`/articles/${article.id}`}>
                 <Card className="hover:border-primary/50 transition-colors cursor-pointer">
                   <CardContent className="p-3">

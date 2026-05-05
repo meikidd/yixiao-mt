@@ -4,17 +4,25 @@ import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const page = parseInt(searchParams.get('page') ?? '1')
+  const q = searchParams.get('q') ?? ''
   const limit = 20
   const offset = (page - 1) * limit
 
   const supabase = getSupabaseServerClient()
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('articles')
-    .select('*', { count: 'exact' })
+    .select('id, title, content, source, date_read, created_at', { count: 'exact' })
     .eq('user_id', DEFAULT_USER_ID)
     .order('date_read', { ascending: false })
-    .range(offset, offset + limit - 1)
+
+  if (q.trim()) {
+    query = query.ilike('content', `%${q.trim()}%`)
+  } else {
+    query = query.range(offset, offset + limit - 1)
+  }
+
+  const { data, error, count } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

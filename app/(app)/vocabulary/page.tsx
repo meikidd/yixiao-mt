@@ -1,8 +1,9 @@
-export const dynamic = 'force-dynamic'
-import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+'use client'
+
+import useSWR from 'swr'
+import { fetcher } from '@/lib/fetcher'
 import { WordListClient } from './WordListClient'
+import { PageSpinner } from '@/components/ui/page-spinner'
 
 const STATUS_LABEL = {
   new: '新词',
@@ -18,21 +19,27 @@ const STATUS_COLOR = {
   mastered: 'bg-green-100 text-green-700',
 }
 
-export default async function VocabularyPage() {
-  const supabase = getSupabaseServerClient()
+interface UserWord {
+  id: string
+  status: string
+  first_seen_at: string
+  words: {
+    id: string
+    hanzi: string
+    pinyin: string
+    definition: string
+    part_of_speech: string | null
+  } | null
+}
 
-  const { data: userWords } = await supabase
-    .from('user_words')
-    .select('*, words(*)')
-    .eq('user_id', DEFAULT_USER_ID)
-    .order('first_seen_at', { ascending: false })
+export default function VocabularyPage() {
+  const { data: userWords, isLoading } = useSWR<UserWord[]>('/api/vocabulary', fetcher)
 
-  const words = (userWords ?? []).map((uw) => ({
-    ...uw,
-    word: uw.words as unknown as {
-      id: string; hanzi: string; pinyin: string; definition: string; part_of_speech: string | null
-    } | null,
-  })).filter((uw) => uw.word)
+  if (isLoading) return <PageSpinner />
+
+  const words = (userWords ?? [])
+    .map((uw) => ({ ...uw, word: uw.words }))
+    .filter((uw) => uw.word)
 
   const counts = {
     total: words.length,

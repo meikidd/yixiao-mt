@@ -1,39 +1,56 @@
-export const dynamic = 'force-dynamic'
-import Link from 'next/link'
-import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui/card'
-import { BookOpen } from 'lucide-react'
-import { ArticleSearch } from './ArticleSearch'
+'use client'
 
-interface Props {
-  searchParams: Promise<{ q?: string }>
+import useSWR from 'swr'
+import Link from 'next/link'
+import { useState } from 'react'
+import { fetcher } from '@/lib/fetcher'
+import { Card, CardContent } from '@/components/ui/card'
+import { BookOpen, Search, X } from 'lucide-react'
+import { useRef } from 'react'
+import { PageSpinner } from '@/components/ui/page-spinner'
+
+interface Article {
+  id: string
+  title: string | null
+  content: string
+  source: string | null
+  date_read: string
+  created_at: string
 }
 
-export default async function ArticlesPage({ searchParams }: Props) {
-  const { q } = await searchParams
-  const supabase = getSupabaseServerClient()
+export default function ArticlesPage() {
+  const [search, setSearch] = useState('')
+  const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  let query = supabase
-    .from('articles')
-    .select('id, title, content, source, date_read, created_at')
-    .eq('user_id', DEFAULT_USER_ID)
-    .order('date_read', { ascending: false })
+  const url = query.trim()
+    ? `/api/articles?q=${encodeURIComponent(query.trim())}`
+    : '/api/articles'
+  const { data, isLoading } = useSWR<{ articles: Article[] }>(url, fetcher)
+  const articles = data?.articles ?? []
 
-  if (q && q.trim()) {
-    query = query.ilike('content', `%${q.trim()}%`)
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setQuery(search)
   }
 
-  const { data: articles } = await query
-
-  // Group by date only when not searching
-  const grouped: Record<string, typeof articles> = {}
-  for (const article of articles ?? []) {
-    const date = article.date_read
-    if (!grouped[date]) grouped[date] = []
-    grouped[date]!.push(article)
+  function handleClear() {
+    setSearch('')
+    setQuery('')
+    inputRef.current?.focus()
   }
 
-  const isSearching = Boolean(q?.trim())
+  // Group by date when not searching
+  const grouped: Record<string, Article[]> = {}
+  if (!query.trim()) {
+    for (const article of articles) {
+      const date = article.date_read
+      if (!grouped[date]) grouped[date] = []
+      grouped[date]!.push(article)
+    }
+  }
+
+  const isSearching = Boolean(query.trim())
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto">
@@ -41,19 +58,41 @@ export default async function ArticlesPage({ searchParams }: Props) {
         <h1 className="text-xl font-bold">文章记录</h1>
       </div>
 
-      <ArticleSearch defaultValue={q ?? ''} />
+      {/* Search */}
+      <form onSubmit={handleSubmit} className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <input
+          ref={inputRef}
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="搜索文章内容…"
+          className="w-full h-9 pl-9 pr-9 rounded-lg border bg-background text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </form>
 
-      {isSearching && (
+      {isLoading && <PageSpinner />}
+
+      {!isLoading && isSearching && (
         <p className="text-sm text-muted-foreground mb-4">
-          搜索「{q}」，找到 {articles?.length ?? 0} 篇文章
+          搜索「{query}」，找到 {articles.length} 篇文章
         </p>
       )}
 
-      {(articles?.length ?? 0) === 0 && (
+      {!isLoading && articles.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
           <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
           {isSearching ? (
-            <p>没有包含「{q}」的文章</p>
+            <p>没有包含「{query}」的文章</p>
           ) : (
             <>
               <p>还没有文章记录</p>
@@ -63,10 +102,10 @@ export default async function ArticlesPage({ searchParams }: Props) {
         </div>
       )}
 
-      {isSearching ? (
+      {!isLoading && isSearching && (
         <div className="flex flex-col gap-2">
-          {articles?.map((article) => {
-            const idx = article.content.toLowerCase().indexOf((q ?? '').toLowerCase())
+          {articles.map((article) => {
+            const idx = article.content.toLowerCase().indexOf(query.toLowerCase())
             const snippet = idx >= 0
               ? article.content.slice(Math.max(0, idx - 10), idx + 30)
               : article.content.slice(0, 40)
@@ -84,7 +123,9 @@ export default async function ArticlesPage({ searchParams }: Props) {
             )
           })}
         </div>
-      ) : (
+      )}
+
+      {!isLoading && !isSearching && (
         <div className="space-y-6">
           {Object.entries(grouped).map(([date, dateArticles]) => (
             <div key={date}>
@@ -92,7 +133,7 @@ export default async function ArticlesPage({ searchParams }: Props) {
                 {new Date(date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
               </p>
               <div className="flex flex-col gap-2">
-                {dateArticles?.map((article) => (
+                {dateArticles.map((article) => (
                   <Link key={article.id} href={`/articles/${article.id}`} className="block">
                     <Card className="hover:border-primary/50 transition-colors cursor-pointer">
                       <CardContent className="p-4">

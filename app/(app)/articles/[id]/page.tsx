@@ -1,69 +1,77 @@
-export const dynamic = 'force-dynamic'
-import { notFound } from 'next/navigation'
-import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
+'use client'
+
+import useSWR from 'swr'
+import { use } from 'react'
+import { fetcher } from '@/lib/fetcher'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, StickyNote } from 'lucide-react'
+import { PageSpinner } from '@/components/ui/page-spinner'
 import Link from 'next/link'
 import { ImageRowWithAppend } from './ImageRowWithAppend'
 import { EditableContent } from './EditableContent'
 import { ArticleWordsBadge } from './ArticleWordsBadge'
 import { DeleteArticleButton } from './DeleteArticleButton'
 
+interface Article {
+  id: string
+  title: string | null
+  content: string
+  date_read: string
+  raw_image_urls: string[] | null
+}
+
+interface ArticleWord {
+  annotation_note: string | null
+  words: { hanzi: string; pinyin: string | null } | null
+}
+
+interface UserWord {
+  words: { hanzi: string } | null
+}
+
+interface ArticleDetailData {
+  article: Article
+  articleWords: ArticleWord[]
+  userWords: UserWord[]
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function ArticleDetailPage({ params }: Props) {
-  const { id } = await params
-  const supabase = getSupabaseServerClient()
+export default function ArticleDetailPage({ params }: Props) {
+  const { id } = use(params)
+  const { data, isLoading } = useSWR<ArticleDetailData>(`/api/articles/${id}`, fetcher)
 
-  const { data: article } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', DEFAULT_USER_ID)
-    .single() as {
-      data: {
-        id: string
-        title: string | null
-        content: string
-        date_read: string
-        raw_image_urls: string[] | null
-      } | null
-    }
+  if (isLoading) return <PageSpinner />
 
-  if (!article) notFound()
-
-  type AW = {
-    annotation_note: string | null
-    words: { hanzi: string; pinyin: string | null } | null
+  if (!data?.article) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 md:p-6">
+        <Link href="/articles" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-4 w-4" />
+          文章列表
+        </Link>
+        <p className="text-muted-foreground">文章不存在</p>
+      </div>
+    )
   }
-  const [{ data: articleWords }, { data: userWords }] = await Promise.all([
-    supabase
-      .from('article_words')
-      .select('annotation_note, words(hanzi, pinyin)')
-      .eq('article_id', id) as unknown as Promise<{ data: AW[] | null }>,
-    supabase
-      .from('user_words')
-      .select('words(hanzi)')
-      .eq('user_id', DEFAULT_USER_ID) as unknown as Promise<{ data: { words: { hanzi: string } | null }[] | null }>,
-  ])
+
+  const { article, articleWords, userWords } = data
 
   const userVocabSet = new Set(
-    (userWords ?? []).map((uw) => uw.words?.hanzi).filter(Boolean) as string[]
+    userWords.map((uw) => uw.words?.hanzi).filter(Boolean) as string[]
   )
 
-  // Only underline words still in the user's vocabulary
-  const vocabWords = (articleWords ?? [])
+  const vocabWords = articleWords
     .map((aw) => aw.words?.hanzi)
     .filter((h): h is string => !!h && userVocabSet.has(h))
 
-  // Pass raw pinyin — <Pinyin> component handles formatting
-  const vocabWordsFull = (articleWords ?? [])
+  const vocabWordsFull = articleWords
     .filter((aw) => aw.words && userVocabSet.has(aw.words.hanzi))
     .map((aw) => ({ hanzi: aw.words!.hanzi, pinyin: aw.words!.pinyin }))
 
-  const handwrittenNotes = (articleWords ?? [])
+  const handwrittenNotes = articleWords
     .filter((aw) => aw.annotation_note)
     .map((aw) => ({ word: aw.words?.hanzi, note: aw.annotation_note }))
 
