@@ -79,7 +79,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="搜索词语…"
-          className="w-full pl-9 pr-4 py-2 rounded-lg border bg-background text-base focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full pl-9 pr-4 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
