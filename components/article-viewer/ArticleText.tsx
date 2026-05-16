@@ -110,6 +110,14 @@ export function ArticleText({ content, vocabWords = [], className, articleId, pi
     }
   }, [selection])
 
+  // Dismiss selection on any click outside char spans or the floating button
+  useEffect(() => {
+    if (!selection) return
+    const handler = () => clearSelection()
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [selection, clearSelection])
+
   const handleCharClick = useCallback((idx: number, e: React.MouseEvent) => {
     e.stopPropagation()
     setSelection(prev => {
@@ -153,7 +161,6 @@ export function ArticleText({ content, vocabWords = [], className, articleId, pi
     <>
       <div
         className={cn('text-xl tracking-wide select-none', pinyinMode ? 'leading-[3rem]' : 'leading-10', className)}
-        onClick={clearSelection}
       >
         {paragraphs.map((para, pi) => {
           if (para === '---') return <hr key={pi} className="my-4 border-border" />

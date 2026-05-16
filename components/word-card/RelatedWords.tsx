@@ -56,7 +56,7 @@ export function RelatedWords({ relationships, learnedWords }: Props) {
                   <button
                     key={rel.word_b.id}
                     onClick={() => openWord(rel.word_b!.hanzi)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm border transition-opacity ${
+                    className={`cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm border transition-opacity ${
                       RELATION_COLORS[type as RelationType] ?? 'bg-muted'
                     } ${isLearned ? 'opacity-100' : 'opacity-60'}`}
                     title={rel.explanation ?? undefined}

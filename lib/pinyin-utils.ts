@@ -7,14 +7,7 @@ const TONE_MARKS: Record<string, string[]> = {
   v: ['ǖ', 'ǘ', 'ǚ', 'ǜ', 'ü'],
 }
 
-function convertSyllable(syllable: string): string {
-  const lastChar = syllable.slice(-1)
-  const tone = parseInt(lastChar)
-  if (isNaN(tone) || tone < 1 || tone > 5) return syllable
-
-  const base = syllable.slice(0, -1)
-  const idx = tone - 1
-
+function applyToneByRules(base: string, idx: number): string {
   // Rule 1: a or e takes the mark
   if (base.includes('a')) return base.replace('a', TONE_MARKS.a[idx])
   if (base.includes('e')) return base.replace('e', TONE_MARKS.e[idx])
@@ -29,6 +22,34 @@ function convertSyllable(syllable: string): string {
     if (vowels.includes(v) && TONE_MARKS[v]) {
       return base.slice(0, i) + TONE_MARKS[v][idx] + base.slice(i + 1)
     }
+  }
+
+  return base
+}
+
+function convertSyllable(syllable: string): string {
+  // Format 1: digit at end, e.g. "meng2"
+  const lastChar = syllable.slice(-1)
+  const endTone = parseInt(lastChar)
+  if (!isNaN(endTone) && endTone >= 1 && endTone <= 5) {
+    return applyToneByRules(syllable.slice(0, -1), endTone - 1)
+  }
+
+  // Format 2: digit embedded after the toned vowel, e.g. "me2ng"
+  const m = syllable.match(/^([a-züv]*)([1-5])([a-züv]*)$/i)
+  if (m) {
+    const [, before, toneStr, after] = m
+    const idx = parseInt(toneStr) - 1
+    // The vowel immediately before the digit gets the mark
+    const vowelMatch = before.match(/[aeiouüv]$/i)
+    if (vowelMatch) {
+      const vowel = vowelMatch[0].toLowerCase()
+      if (TONE_MARKS[vowel]) {
+        return before.slice(0, -1) + TONE_MARKS[vowel][idx] + after
+      }
+    }
+    // Fallback: apply standard rules to the full base
+    return applyToneByRules(before + after, idx)
   }
 
   return syllable

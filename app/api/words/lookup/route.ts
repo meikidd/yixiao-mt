@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient, DEFAULT_USER_ID } from '@/lib/supabase/server'
 import { lookupWord } from '@/lib/claude/lookup'
-import { findRelatedWords } from '@/lib/claude/relate'
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,12 +51,6 @@ export async function POST(request: NextRequest) {
 
     const isSaved = !!userWord
 
-    // Get existing relationships
-    let { data: relationships } = await supabase
-      .from('word_relationships')
-      .select('*, word_b:words!word_relationships_word_b_id_fkey(id, hanzi)')
-      .eq('word_a_id', cached.id)
-
     // Get user's learned words
     const { data: userWords } = await supabase
       .from('user_words')
@@ -69,51 +62,56 @@ export async function POST(request: NextRequest) {
       .map((uw) => (uw.words as unknown as { hanzi: string } | null)?.hanzi)
       .filter((w): w is string => !!w && w !== hanzi)
 
-    // Synchronously compute relationships for any vocab words not yet checked.
-    // Must be synchronous — serverless functions terminate after response is sent,
-    // so fire-and-forget promises never complete reliably.
-    const checkedSet = new Set(
-      (relationships ?? [])
-        .map((r) => (r.word_b as { hanzi: string } | null)?.hanzi)
-        .filter(Boolean)
+    // Find same_char relationships: learned words that share any character with the queried word
+    const hanziChars = new Set(Array.from(hanzi))
+    const sameCharHanzi = learnedWords.filter((w) =>
+      Array.from(w).some((c) => hanziChars.has(c))
     )
-    const uncovered = learnedWords.filter((w) => !checkedSet.has(w))
 
-    if (uncovered.length > 0) {
-      try {
-        const newRelations = await findRelatedWords(hanzi, uncovered)
-        for (const rel of newRelations) {
-          const { data: wordB } = await supabase
-            .from('words').select('id').eq('hanzi', rel.word).single()
-          if (!wordB) continue
+    let relationships: { relation_type: string; explanation: null; word_b: { id: string; hanzi: string } }[] = []
 
-          await supabase.from('word_relationships').upsert({
-            word_a_id: cached.id, word_b_id: wordB.id,
-            relation_type: rel.relation_type, auto_generated: true,
-          }, { onConflict: 'word_a_id,word_b_id,relation_type' })
+    if (sameCharHanzi.length > 0) {
+      const { data: matchedWords } = await supabase
+        .from('words')
+        .select('id, hanzi')
+        .in('hanzi', sameCharHanzi)
 
-          await supabase.from('word_relationships').upsert({
-            word_a_id: wordB.id, word_b_id: cached.id,
-            relation_type: rel.relation_type, auto_generated: true,
-          }, { onConflict: 'word_a_id,word_b_id,relation_type' })
-        }
-
-        // Re-fetch relationships to include newly computed ones
-        const { data: fresh } = await supabase
-          .from('word_relationships')
-          .select('*, word_b:words!word_relationships_word_b_id_fkey(id, hanzi)')
-          .eq('word_a_id', cached.id)
-        relationships = fresh
-      } catch (err) {
-        console.error('Relationship compute error:', err)
-      }
+      relationships = (matchedWords ?? []).map((w) => ({
+        relation_type: 'same_char' as const,
+        explanation: null,
+        word_b: { id: w.id, hanzi: w.hanzi },
+      }))
     }
+
+    // Find all articles whose content contains this word
+    const { data: articlesWithWord } = await supabase
+      .from('articles')
+      .select('id, title, date_read, content')
+      .ilike('content', `%${hanzi}%`)
+      .limit(10)
+
+    // Extract a short context snippet around the first occurrence
+    const articleWords = (articlesWithWord ?? []).map((art) => {
+      const idx = art.content.indexOf(hanzi)
+      let contextSentence: string | null = null
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 15)
+        const end = Math.min(art.content.length, idx + hanzi.length + 15)
+        contextSentence = art.content.slice(start, end).replace(/\n/g, ' ')
+      }
+      return {
+        article_id: art.id,
+        context_sentence: contextSentence,
+        articles: { id: art.id, title: art.title, date_read: art.date_read, content: art.content },
+      }
+    })
 
     return NextResponse.json({
       word: cached,
-      relationships: relationships ?? [],
+      relationships,
       learnedWords,
       isSaved,
+      articleWords,
     })
   } catch (err) {
     console.error('Lookup error:', err)
