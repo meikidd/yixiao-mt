@@ -85,7 +85,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
 
       {/* Filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(['all', 'new', 'learning', 'reviewing', 'mastered'] as FilterStatus[]).map((s) => (
+        {(['all', 'learning', 'reviewing'] as FilterStatus[]).map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
