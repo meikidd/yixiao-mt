@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     .from('articles')
     .select('id, title, content, source, date_read, created_at', { count: 'exact' })
     .eq('user_id', DEFAULT_USER_ID)
-    .order('date_read', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (q.trim()) {
     query = query.ilike('content', `%${q.trim()}%`)

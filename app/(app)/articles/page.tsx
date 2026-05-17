@@ -1,12 +1,10 @@
 'use client'
 
-import useSWR from 'swr'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetcher } from '@/lib/fetcher'
 import { Card, CardContent } from '@/components/ui/card'
-import { BookOpen, Search, X } from 'lucide-react'
-import { useRef } from 'react'
+import { BookOpen, Search, X, Loader2 } from 'lucide-react'
 import { PageSpinner } from '@/components/ui/page-spinner'
 
 interface Article {
@@ -23,11 +21,61 @@ export default function ArticlesPage() {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const url = query.trim()
-    ? `/api/articles?q=${encodeURIComponent(query.trim())}`
-    : '/api/articles'
-  const { data, isLoading } = useSWR<{ articles: Article[] }>(url, fetcher)
-  const articles = data?.articles ?? []
+  const [articles, setArticles] = useState<Article[]>([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const hasMore = total === null || articles.length < total
+
+  const loadPage = useCallback(async (pageNum: number, q: string, replace: boolean) => {
+    if (replace) {
+      setIsLoading(true)
+      setArticles([])
+      setTotal(null)
+    } else {
+      setIsLoadingMore(true)
+    }
+
+    const url = q.trim()
+      ? `/api/articles?q=${encodeURIComponent(q.trim())}`
+      : `/api/articles?page=${pageNum}`
+
+    try {
+      const data = await fetcher(url) as { articles: Article[]; total: number }
+      setArticles(prev => replace ? data.articles : [...prev, ...data.articles])
+      setTotal(data.total)
+      setPage(pageNum)
+    } finally {
+      setIsLoading(false)
+      setIsLoadingMore(false)
+    }
+  }, [])
+
+  // Load first page whenever query changes
+  useEffect(() => {
+    queueMicrotask(() => loadPage(1, query, true))
+  }, [query, loadPage])
+
+  // Intersection Observer for infinite scroll (only when not searching)
+  useEffect(() => {
+    if (query.trim()) return
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+          loadPage(page + 1, '', false)
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [query, hasMore, isLoadingMore, isLoading, page, loadPage])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -40,11 +88,11 @@ export default function ArticlesPage() {
     inputRef.current?.focus()
   }
 
-  // Group by date when not searching
+  // Group by created_at date when not searching
   const grouped: Record<string, Article[]> = {}
   if (!query.trim()) {
     for (const article of articles) {
-      const date = article.date_read
+      const date = article.created_at.slice(0, 10)
       if (!grouped[date]) grouped[date] = []
       grouped[date]!.push(article)
     }
@@ -84,7 +132,7 @@ export default function ArticlesPage() {
 
       {!isLoading && isSearching && (
         <p className="text-sm text-muted-foreground mb-4">
-          搜索「{query}」，找到 {articles.length} 篇文章
+          搜索「{query}」，找到 {total ?? 0} 篇文章
         </p>
       )}
 
@@ -130,7 +178,7 @@ export default function ArticlesPage() {
           {Object.entries(grouped).map(([date, dateArticles]) => (
             <div key={date}>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                {new Date(date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
+                {new Date(date + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
               </p>
               <div className="flex flex-col gap-2">
                 {dateArticles.map((article) => (
@@ -150,6 +198,21 @@ export default function ArticlesPage() {
               </div>
             </div>
           ))}
+
+          {/* Sentinel for infinite scroll */}
+          <div ref={sentinelRef} />
+
+          {isLoadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {!hasMore && articles.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-4">
+              已显示全部 {total} 篇文章
+            </p>
+          )}
         </div>
       )}
     </div>
