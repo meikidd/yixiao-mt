@@ -150,7 +150,7 @@ export function WordCardPanel({ hanzi, context, articleId }: Props) {
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">例句</h3>
               <ul className="space-y-2">
                 {exampleSentences.map((ex, i) => (
-                  <li key={i} className="text-sm bg-muted rounded-lg px-3 py-2.5 leading-relaxed">
+                  <li key={i} className="text-sm bg-zinc-200 rounded-lg px-3 py-2.5 leading-relaxed">
                     {ex.sentence}
                   </li>
                 ))}
@@ -165,13 +165,13 @@ export function WordCardPanel({ hanzi, context, articleId }: Props) {
           {data.articleWords.length > 0 && (
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">文章</h3>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 {data.articleWords.map((aw) => {
                   const art = aw.articles
                   if (!art) return null
                   return (
                     <Link key={aw.article_id} href={`/articles/${aw.article_id}`}>
-                      <div className="rounded-lg border bg-background px-3 py-2.5 hover:border-primary/50 transition-colors">
+                      <div className="rounded-lg border bg-background px-3 py-2.5 hover:border-primary transition-colors">
                         <p className="text-sm font-medium line-clamp-1">
                           {art.title ?? art.content.slice(0, 20) + '…'}
                         </p>

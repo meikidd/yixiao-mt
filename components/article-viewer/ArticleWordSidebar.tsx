@@ -58,7 +58,7 @@ export function ArticleWordSidebar({ words, articleId }: Props) {
               >
                 <span className="font-medium text-base">{w.hanzi}</span>
                 {w.pinyin && (
-                  <span className="block text-xs text-muted-foreground mt-0.5 group-hover:text-foreground/60 transition-colors">
+                  <span className="block text-xs text-muted-foreground mt-0.5 group-hover:text-muted-foreground transition-colors">
                     <Pinyin value={w.pinyin} />
                   </span>
                 )}

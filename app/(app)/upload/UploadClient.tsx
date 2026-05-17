@@ -115,7 +115,7 @@ export function UploadClient() {
     <div className="space-y-4">
       {/* Error banner */}
       {phase === 'error' && (
-        <Card className="border-destructive bg-destructive/5">
+        <Card className="border-destructive bg-red-50">
           <CardContent className="flex items-center justify-between p-3 text-destructive text-sm">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 shrink-0" />

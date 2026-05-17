@@ -81,7 +81,7 @@ export function EditableContent({ articleId, content, vocabWords }: Props) {
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          className="w-full min-h-[400px] text-base leading-8 font-inherit border rounded-lg p-3 resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+          className="w-full min-h-[400px] text-base leading-8 font-inherit border rounded-lg p-3 resize-y focus:outline-none focus:ring-2 focus:ring-primary bg-background"
           autoFocus
         />
       ) : (

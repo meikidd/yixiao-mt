@@ -168,7 +168,7 @@ export default function ArticleDetailPage({ params }: Props) {
 
         {/* Desktop vocab/word sidebar — hidden below xl */}
         <aside className="hidden xl:block xl:self-stretch w-80 shrink-0">
-          <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto rounded-xl bg-muted/30 border border-border p-4">
+          <div className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto rounded-xl bg-muted border border-border p-4">
             <ArticleWordSidebar words={vocabWordsFull} articleId={id} />
           </div>
         </aside>

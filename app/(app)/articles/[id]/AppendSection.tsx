@@ -141,7 +141,7 @@ export function AppendSection({ articleId, inlineButton = false }: Props) {
   }
 
   return (
-    <div className="border rounded-xl p-4 space-y-3 bg-muted/30">
+    <div className="border rounded-xl p-4 space-y-3 bg-muted">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">追加照片到此文章</p>
         {!isProcessing && (

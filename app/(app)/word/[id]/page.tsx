@@ -197,7 +197,7 @@ export default async function WordDetailPage({ params }: Props) {
             <div className="space-y-2">
               {articleWords.map(({ art, contextSentence }) => (
                   <Link key={art.id} href={`/articles/${art.id}`}>
-                    <div className="rounded-lg border bg-background px-3 py-2.5 hover:border-primary/50 transition-colors">
+                    <div className="rounded-lg border bg-background px-3 py-2.5 hover:border-primary transition-colors">
                       <p className="text-sm font-medium line-clamp-1">
                         {art.title ?? art.content.slice(0, 20) + '…'}
                       </p>

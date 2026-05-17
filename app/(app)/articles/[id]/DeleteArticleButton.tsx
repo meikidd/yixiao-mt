@@ -26,7 +26,7 @@ export function DeleteArticleButton({ articleId }: { articleId: string }) {
     <Button
       variant="ghost"
       size="sm"
-      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      className="text-destructive hover:text-destructive hover:bg-red-50"
       onClick={handleDelete}
       disabled={loading}
     >

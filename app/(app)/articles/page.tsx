@@ -159,7 +159,7 @@ export default function ArticlesPage() {
               : article.content.slice(0, 40)
             return (
               <Link key={article.id} href={`/articles/${article.id}`} className="block">
-                <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                <Card className="hover:border-primary transition-colors cursor-pointer">
                   <CardContent className="p-4">
                     <p className="font-medium line-clamp-1">
                       {article.title ?? article.content.slice(0, 30) + '…'}
@@ -183,7 +183,7 @@ export default function ArticlesPage() {
               <div className="flex flex-col gap-2">
                 {dateArticles.map((article) => (
                   <Link key={article.id} href={`/articles/${article.id}`} className="block">
-                    <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                    <Card className="hover:border-primary transition-colors cursor-pointer">
                       <CardContent className="p-4">
                         <p className="font-medium line-clamp-1">
                           {article.title ?? article.content.slice(0, 30) + '…'}

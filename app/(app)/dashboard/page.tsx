@@ -94,7 +94,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-2">
             {recentArticles.map((article) => (
               <Link key={article.id} href={`/articles/${article.id}`}>
-                <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                <Card className="hover:border-primary transition-colors cursor-pointer">
                   <CardContent className="p-3">
                     <p className="font-medium line-clamp-1">
                       {article.title ?? article.content.slice(0, 20) + '…'}

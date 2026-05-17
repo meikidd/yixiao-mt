@@ -90,7 +90,7 @@ export default function VocabularyPage() {
       <aside className="hidden xl:block xl:self-stretch w-80 shrink-0">
         <div className="sticky top-6 max-h-[calc(100vh-3rem)] flex flex-col gap-3">
           {/* Stats block */}
-          <div className="rounded-xl bg-muted/30 border border-border p-4 flex-none">
+          <div className="rounded-xl bg-muted border border-border p-4 flex-none">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">学习概览</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <span className="text-muted-foreground">共 <strong className="text-foreground">{counts.total}</strong> 个词</span>
@@ -101,7 +101,7 @@ export default function VocabularyPage() {
           </div>
           {/* Word card block — only rendered when a word is selected */}
           {open && (
-            <div className="rounded-xl bg-muted/30 border border-border p-4 overflow-y-auto">
+            <div className="rounded-xl bg-muted border border-border p-4 overflow-y-auto">
               <WordCardSidebar />
             </div>
           )}

@@ -138,7 +138,7 @@ export function ImageRowWithAppend({ articleId, imageUrls }: Props) {
           className={cn(
             'shrink-0 h-64 w-28 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors',
             open
-              ? 'border-primary text-primary bg-primary/5'
+              ? 'border-primary text-primary bg-blue-50'
               : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
           )}
         >
@@ -149,7 +149,7 @@ export function ImageRowWithAppend({ articleId, imageUrls }: Props) {
 
       {/* Append panel — renders below the row */}
       {open && (
-        <div className="mt-3 border rounded-xl p-4 space-y-3 bg-muted/30">
+        <div className="mt-3 border rounded-xl p-4 space-y-3 bg-muted">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">追加照片到此文章</p>
             {!isProcessing && (

@@ -183,9 +183,9 @@ export function ArticleText({ content, vocabWords = [], className, articleId, pi
                       const charClass = cn(
                         'cursor-pointer rounded-sm transition-colors',
                         isSelected
-                          ? 'bg-primary/25 text-primary'
+                          ? 'bg-blue-100 text-primary'
                           : [
-                              'hover:bg-primary/10 hover:text-primary',
+                              'hover:bg-blue-50 hover:text-primary',
                               highlighted.has(ci)
                                 ? 'underline decoration-primary decoration-2 underline-offset-4'
                                 : '',
@@ -205,7 +205,7 @@ export function ArticleText({ content, vocabWords = [], className, articleId, pi
                             <rt
                               lang="en"
                               style={{ fontFamily: LATIN_FONTS, letterSpacing: '-0.03em' }}
-                              className="text-[0.5em] text-primary/70 not-italic"
+                              className="text-[0.5em] text-primary not-italic"
                             >
                               {charPinyin}
                             </rt>

@@ -25,7 +25,7 @@ export function ArticleWordsBadge({ words, articleId }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors"
+        className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-primary font-medium hover:bg-blue-100 transition-colors"
       >
         {words.length} 个词汇
       </button>
@@ -43,7 +43,7 @@ export function ArticleWordsBadge({ words, articleId }: Props) {
                   setOpen(false)
                   setTimeout(() => openWord(w.hanzi, '', articleId), 200)
                 }}
-                className="flex flex-col items-center px-3 py-2 rounded-lg border bg-muted hover:bg-muted/80 transition-colors min-w-[56px]"
+                className="flex flex-col items-center px-3 py-2 rounded-lg border bg-muted hover:bg-muted transition-colors min-w-[56px]"
               >
                 <span className="text-lg font-medium">{w.hanzi}</span>
                 <Pinyin value={w.pinyin} className="text-[10px] text-muted-foreground mt-0.5" />

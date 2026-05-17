@@ -92,7 +92,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
               filter === s
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                : 'bg-muted text-muted-foreground hover:bg-muted'
             }`}
           >
             {s === 'all' ? `全部 (${words.length})` : `${statusLabels[s]} (${words.filter((w) => w.status === s).length})`}
@@ -111,7 +111,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
           return (
             <Card
               key={uw.id}
-              className={`cursor-pointer hover:border-primary/50 transition-all active:scale-95 ${isPending ? 'opacity-40 pointer-events-none' : ''}`}
+              className={`cursor-pointer hover:border-primary transition-all active:scale-95 ${isPending ? 'opacity-40 pointer-events-none' : ''}`}
               onClick={() => openWord(uw.word!.hanzi)}
             >
               <CardContent className="p-3">
@@ -120,7 +120,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
                   <span className="text-lg font-bold leading-tight">{uw.word.hanzi}</span>
                   <button
                     onClick={(e) => handleDelete(e, uw)}
-                    className="p-0.5 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                    className="p-0.5 rounded text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors shrink-0"
                     title="从词汇表删除"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
