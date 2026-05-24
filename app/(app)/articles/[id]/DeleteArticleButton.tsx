@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { basePath } from '@/lib/base-path'
 
 export function DeleteArticleButton({ articleId }: { articleId: string }) {
   const router = useRouter()
@@ -13,7 +14,7 @@ export function DeleteArticleButton({ articleId }: { articleId: string }) {
     if (!confirm('确定要删除这篇文章吗？删除后无法恢复。')) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/articles/${articleId}`, { method: 'DELETE' })
+      const res = await fetch(`${basePath}/api/articles/${articleId}`, { method: 'DELETE' })
       if (res.ok) {
         router.push('/articles')
       }

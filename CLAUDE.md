@@ -17,7 +17,7 @@
 - **数据库**：Supabase (PostgreSQL + Storage)
 - **AI**：Claude API (`claude-sonnet-4-6`) — OCR、字词查询、知识关联
 - **图像预处理**：OpenCV.js（浏览器端透视矫正）
-- **部署**：Vercel
+- **部署**：Vercel（`yixiao-mt.vercel.app`），通过 Cloudflare Worker 代理后对外暴露为 `meiyixiao.com/mt`
 
 ---
 
@@ -30,6 +30,26 @@
 - 界面语言：简体中文
 - 字词释义：**纯中文**，不加英文辅助（Yixiao 英文好，但这是华语学习工具）
 - 拼音：新加坡 MOE 标准
+
+### basePath 与 API 调用
+
+本项目在 `next.config.ts` 中配置了 `basePath: '/mt'`，以便通过 `meiyixiao.com/mt` 访问。
+
+**规则：客户端组件中所有 `fetch` 和 `useSWR` 调用 API 路由，必须使用 `basePath` 前缀：**
+
+```ts
+import { basePath } from '@/lib/base-path'
+
+// ✅ 正确
+fetch(`${basePath}/api/articles`)
+useSWR(`${basePath}/api/vocabulary`, fetcher)
+
+// ❌ 错误 — basePath 为 '/mt' 时会 404
+fetch('/api/articles')
+useSWR('/api/vocabulary', fetcher)
+```
+
+`lib/base-path.ts` 读取 `process.env.NEXT_PUBLIC_BASE_PATH`（值为 `/mt`）。服务端 API Route 文件（`route.ts`）不受影响，路径无需修改。
 
 ### AI 调用原则
 - 字词释义查询结果**缓存到数据库**（`words` 表），同词不重复调用
@@ -73,4 +93,5 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_DEFAULT_USER_ID=
+NEXT_PUBLIC_BASE_PATH=/mt          # Next.js basePath，客户端 API 调用需加此前缀
 ```

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FlashCard } from './FlashCard'
 import { CheckCircle2, Brain } from 'lucide-react'
+import { basePath } from '@/lib/base-path'
 
 interface ReviewWord {
   userWordId: string
@@ -29,7 +30,7 @@ export function ReviewSession({ initialWords }: Props) {
   async function handleResult(wordId: string, result: 'known' | 'again') {
     setResults((prev) => ({ ...prev, [wordId]: result }))
 
-    await fetch(`/api/review/${wordId}`, {
+    await fetch(`${basePath}/api/review/${wordId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ result }),

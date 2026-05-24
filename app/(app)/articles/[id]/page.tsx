@@ -3,6 +3,7 @@
 import useSWR from 'swr'
 import { use, useEffect } from 'react'
 import { fetcher } from '@/lib/fetcher'
+import { basePath } from '@/lib/base-path'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, StickyNote } from 'lucide-react'
 import { PageSpinner } from '@/components/ui/page-spinner'
@@ -44,7 +45,7 @@ interface Props {
 
 export default function ArticleDetailPage({ params }: Props) {
   const { id } = use(params)
-  const { data, isLoading } = useSWR<ArticleDetailData>(`/api/articles/${id}`, fetcher)
+  const { data, isLoading } = useSWR<ArticleDetailData>(`${basePath}/api/articles/${id}`, fetcher)
   const { setSidebarMode, close } = useWordCardStore()
 
   // Enable sidebar mode on xl+ screens; close card and restore on unmount or resize

@@ -2,6 +2,7 @@
 
 import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
+import { basePath } from '@/lib/base-path'
 import { ReviewSession } from '@/components/flashcard/ReviewSession'
 import { Brain } from 'lucide-react'
 import { PageSpinner } from '@/components/ui/page-spinner'
@@ -15,7 +16,7 @@ interface DueWord {
 }
 
 export default function ReviewPage() {
-  const { data, isLoading } = useSWR<{ dueWords: DueWord[] }>('/api/review/due', fetcher)
+  const { data, isLoading } = useSWR<{ dueWords: DueWord[] }>(`${basePath}/api/review/due`, fetcher)
 
   if (isLoading) return <PageSpinner />
 

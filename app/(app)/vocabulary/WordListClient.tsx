@@ -1,5 +1,7 @@
 'use client'
 
+import { basePath } from '@/lib/base-path'
+
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { useWordCardStore } from '@/store/wordCard'
@@ -51,7 +53,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
     e.stopPropagation()
     const next = STATUS_CYCLE[uw.status] ?? 'new'
     setWords((prev) => prev.map((w) => w.id === uw.id ? { ...w, status: next } : w))
-    await fetch(`/api/user-words/${uw.id}`, {
+    await fetch(`${basePath}/api/user-words/${uw.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: next }),
@@ -62,7 +64,7 @@ export function WordListClient({ words: initialWords, statusLabels, statusColors
     e.stopPropagation()
     if (!confirm(`从词汇表删除「${uw.word?.hanzi}」？`)) return
     setPendingIds((prev) => new Set([...prev, uw.id]))
-    const res = await fetch(`/api/user-words/${uw.id}`, { method: 'DELETE' })
+    const res = await fetch(`${basePath}/api/user-words/${uw.id}`, { method: 'DELETE' })
     if (res.ok) {
       setWords((prev) => prev.filter((w) => w.id !== uw.id))
     }

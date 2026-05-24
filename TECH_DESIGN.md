@@ -10,7 +10,7 @@
 | AI 引擎 | Claude API (claude-sonnet-4-6) | OCR + 字词解析 + 知识关联用同一个 API |
 | 图像预处理 | OpenCV.js（浏览器端）+ Claude Vision | OpenCV 做透视矫正，Claude 做 OCR 和语义理解 |
 | 全局状态 | Zustand | 字词卡片、上传进度等跨组件状态 |
-| 部署 | Vercel | Next.js 最佳拍档，自动 HTTPS，全球 CDN |
+| 部署 | Vercel + Cloudflare Worker | Vercel 部署 Next.js；Cloudflare Worker 代理 `/mt/*` → `yixiao-mt.vercel.app/mt/*`，对外访问地址为 `meiyixiao.com/mt` |
 | 字体 | Noto Sans SC | 覆盖所有简体汉字，免费 |
 
 ---
@@ -152,6 +152,10 @@ CREATE TABLE word_relationships (
 ---
 
 ## API 设计
+
+> **注意**：项目配置了 `basePath: '/mt'`，所有路由（页面和 API）在生产环境均带 `/mt` 前缀。
+> 下表列出 API Route 文件路径，实际对外 URL 请在前面加 `/mt`（如 `POST /mt/api/upload`）。
+> 客户端 `fetch` 调用必须使用 `${basePath}/api/...`，详见 CLAUDE.md 的「basePath 与 API 调用」章节。
 
 ### 图像处理
 `POST /api/upload` — 接收图片，运行 Claude Vision，返回结构化文章数据
@@ -313,4 +317,5 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_DEFAULT_USER_ID=    # 当前阶段硬编码的单用户 ID
+NEXT_PUBLIC_BASE_PATH=/mt       # Next.js basePath，与 next.config.ts 中的 basePath 值保持一致
 ```

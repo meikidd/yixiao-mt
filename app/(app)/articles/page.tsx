@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetcher } from '@/lib/fetcher'
+import { basePath } from '@/lib/base-path'
 import { Card, CardContent } from '@/components/ui/card'
 import { BookOpen, Search, X, Loader2 } from 'lucide-react'
 import { PageSpinner } from '@/components/ui/page-spinner'
@@ -40,8 +41,8 @@ export default function ArticlesPage() {
     }
 
     const url = q.trim()
-      ? `/api/articles?q=${encodeURIComponent(q.trim())}`
-      : `/api/articles?page=${pageNum}`
+      ? `${basePath}/api/articles?q=${encodeURIComponent(q.trim())}`
+      : `${basePath}/api/articles?page=${pageNum}`
 
     try {
       const data = await fetcher(url) as { articles: Article[]; total: number }

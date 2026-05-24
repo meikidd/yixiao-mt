@@ -3,6 +3,7 @@
 import useSWR from 'swr'
 import Link from 'next/link'
 import { fetcher } from '@/lib/fetcher'
+import { basePath } from '@/lib/base-path'
 import { Card, CardContent } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { Camera, BookOpen, Brain } from 'lucide-react'
@@ -17,7 +18,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { data, isLoading } = useSWR<DashboardStats>('/api/dashboard/stats', fetcher)
+  const { data, isLoading } = useSWR<DashboardStats>(`${basePath}/api/dashboard/stats`, fetcher)
 
   if (isLoading) return <PageSpinner />
 

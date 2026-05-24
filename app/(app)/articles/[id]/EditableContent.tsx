@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { basePath } from '@/lib/base-path'
 import { ArticleText } from '@/components/article-viewer/ArticleText'
 import { Pencil, Check, X, Loader2, AudioLines } from 'lucide-react'
 
@@ -22,7 +23,7 @@ export function EditableContent({ articleId, content, vocabWords }: Props) {
   async function handleSave() {
     setSaving(true)
     try {
-      const res = await fetch(`/api/articles/${articleId}`, {
+      const res = await fetch(`${basePath}/api/articles/${articleId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: draft }),

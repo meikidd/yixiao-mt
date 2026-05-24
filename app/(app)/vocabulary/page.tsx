@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
+import { basePath } from '@/lib/base-path'
 import { WordListClient } from './WordListClient'
 import { PageSpinner } from '@/components/ui/page-spinner'
 import { WordCardSidebar } from '@/components/word-card/WordCardSidebar'
@@ -36,7 +37,7 @@ interface UserWord {
 }
 
 export default function VocabularyPage() {
-  const { data: userWords, isLoading } = useSWR<UserWord[]>('/api/vocabulary', fetcher)
+  const { data: userWords, isLoading } = useSWR<UserWord[]>(`${basePath}/api/vocabulary`, fetcher)
   const { open, setSidebarMode, close } = useWordCardStore()
 
   // Enable sidebar mode on xl+ screens; close card and restore on unmount

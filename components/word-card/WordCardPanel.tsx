@@ -10,6 +10,7 @@ import { RelatedWords } from './RelatedWords'
 import { Loader2, BookmarkPlus, BookmarkCheck, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Pinyin } from '@/components/ui/pinyin'
+import { basePath } from '@/lib/base-path'
 
 interface ArticleEntry {
   article_id: string
@@ -32,7 +33,7 @@ interface Props {
 }
 
 function lookupFetcher({ hanzi, context }: { hanzi: string; context: string }) {
-  return fetch('/api/words/lookup', {
+  return fetch(`${basePath}/api/words/lookup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ hanzi, context }),
@@ -45,7 +46,7 @@ export function WordCardPanel({ hanzi, context, articleId }: Props) {
   const [justSaved, setJustSaved] = useState(false)
 
   const { data, isLoading, error } = useSWR<LookupData>(
-    hanzi ? { url: '/api/words/lookup', hanzi, context } : null,
+    hanzi ? { url: `${basePath}/api/words/lookup`, hanzi, context } : null,
     lookupFetcher
   )
 
@@ -53,7 +54,7 @@ export function WordCardPanel({ hanzi, context, articleId }: Props) {
     if (!data?.word) return
     setSaving(true)
     try {
-      const res = await fetch('/api/words/save', {
+      const res = await fetch(`${basePath}/api/words/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wordId: data.word.id, hanzi: data.word.hanzi, articleId, context }),

@@ -8,6 +8,7 @@ import { Camera, ImagePlus, Loader2, CheckCircle2, AlertCircle, X, Upload } from
 import { preprocessDocumentImage } from '@/lib/opencv/processor'
 import { compressImage } from '@/lib/image-utils'
 import { cn } from '@/lib/utils'
+import { basePath } from '@/lib/base-path'
 
 interface ImageItem {
   id: string
@@ -86,7 +87,7 @@ export function UploadClient() {
     valid.forEach((it) => formData.append('images', it.blob!, 'image.jpg'))
 
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const res = await fetch(`${basePath}/api/upload`, { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) {
         setPhase('error')
